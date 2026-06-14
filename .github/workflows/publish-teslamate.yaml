@@ -6,34 +6,60 @@ on:
       - main
     paths:
       - "teslamate/**"
+      - ".github/workflows/publish-teslamate.yaml"
   workflow_dispatch:
+
+env:
+  TESLAMATE_VERSION: "4.0.0"
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/ha-addons-teslamate
 
 jobs:
   publish:
-    name: Publish
-    runs-on: ubuntu-latest
+    name: Build & Push (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
     strategy:
       matrix:
-        arch: ["amd64", "aarch64"]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            build_arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            runner: ubuntu-latest
+            build_arch: aarch64
+            platform: linux/arm64
 
     steps:
-      - name: Checkout the repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish
-        uses: home-assistant/builder@2026.03.2
+      - name: Build and push
+        uses: docker/build-push-action@v6
         with:
-          args: |
-            --${{ matrix.arch }} \
-            --target /data/teslamate/ \
-            --addon
+          context: ./teslamate
+          platforms: ${{ matrix.platform }}
+          push: true
+          build-args: |
+            BUILD_FROM=teslamate/teslamate:${{ env.TESLAMATE_VERSION }}
+            teslamate_version=${{ env.TESLAMATE_VERSION }}
+            BUILD_ARCH=${{ matrix.build_arch }}
+          tags: |
+            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:${{ env.TESLAMATE_VERSION }}
+            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:latest
