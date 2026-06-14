@@ -45,6 +45,7 @@ RUN \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
 COPY rootfs /
+RUN chmod +x /dashboards.sh
 COPY --from=grafana /dashboards /dashboards
 COPY --from=grafana /dashboards_internal /dashboards
 
