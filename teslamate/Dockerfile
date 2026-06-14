@@ -1,11 +1,10 @@
-ARG BUILD_FROM
-ARG teslamate_version
-FROM teslamate/grafana:${teslamate_version} as grafana
+ARG TESLAMATE_IMAGE=ghcr.io/as881028/teslamate:main
+ARG GRAFANA_IMAGE=ghcr.io/as881028/teslamate/grafana:main
+FROM ${GRAFANA_IMAGE} as grafana
 
 #---
 
-ARG BUILD_FROM
-FROM $BUILD_FROM
+FROM ${TESLAMATE_IMAGE}
 
 ARG BUILD_ARCH
 ARG BASHIO_VERSION=0.16.2

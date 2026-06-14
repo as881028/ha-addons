@@ -10,9 +10,10 @@ on:
   workflow_dispatch:
 
 env:
-  TESLAMATE_VERSION: "4.0.0"
   REGISTRY: ghcr.io
   IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/ha-addons-teslamate
+  TESLAMATE_IMAGE: ghcr.io/as881028/teslamate:main
+  GRAFANA_IMAGE: ghcr.io/as881028/teslamate/grafana:main
 
 jobs:
   publish:
@@ -26,11 +27,9 @@ jobs:
         include:
           - arch: amd64
             runner: ubuntu-latest
-            build_arch: amd64
             platform: linux/amd64
           - arch: aarch64
             runner: ubuntu-latest
-            build_arch: aarch64
             platform: linux/arm64
 
     steps:
@@ -57,9 +56,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           build-args: |
-            BUILD_FROM=teslamate/teslamate:${{ env.TESLAMATE_VERSION }}
-            teslamate_version=${{ env.TESLAMATE_VERSION }}
-            BUILD_ARCH=${{ matrix.build_arch }}
+            TESLAMATE_IMAGE=${{ env.TESLAMATE_IMAGE }}
+            GRAFANA_IMAGE=${{ env.GRAFANA_IMAGE }}
+            BUILD_ARCH=${{ matrix.arch }}
           tags: |
-            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:${{ env.TESLAMATE_VERSION }}
+            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:4.0.0
             ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:latest
