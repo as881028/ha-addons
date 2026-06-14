@@ -12,8 +12,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/ha-addons-teslamate
-  TESLAMATE_IMAGE: ghcr.io/as881028/teslamate:main
-  GRAFANA_IMAGE: ghcr.io/as881028/teslamate/grafana:main
 
 jobs:
   publish:
@@ -28,9 +26,11 @@ jobs:
           - arch: amd64
             runner: ubuntu-latest
             platform: linux/amd64
+            tag_suffix: amd64
           - arch: aarch64
             runner: ubuntu-latest
             platform: linux/arm64
+            tag_suffix: arm64
 
     steps:
       - name: Checkout
@@ -56,8 +56,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           build-args: |
-            TESLAMATE_IMAGE=${{ env.TESLAMATE_IMAGE }}
-            GRAFANA_IMAGE=${{ env.GRAFANA_IMAGE }}
+            TESLAMATE_IMAGE=ghcr.io/${{ github.repository_owner }}/teslamate:main-${{ matrix.tag_suffix }}
+            GRAFANA_IMAGE=ghcr.io/${{ github.repository_owner }}/teslamate/grafana:main-${{ matrix.tag_suffix }}
             BUILD_ARCH=${{ matrix.arch }}
           tags: |
             ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:4.0.0
