@@ -1,0 +1,18 @@
+{
+  "build_from": {
+    "aarch64": "teslamate/teslamate:4.0.0",
+    "amd64": "teslamate/teslamate:4.0.0"
+  },
+  "args": {
+    "teslamate_version": "4.0.0"
+  },
+  "labels": {
+    "maintainer": "as881028 (https://github.com/as881028)",
+    "org.opencontainers.image.authors": "as881028 (https://github.com/as881028)",
+    "org.opencontainers.image.description": "A self-hosted data logger for your Tesla.",
+    "org.opencontainers.image.documentation": "https://github.com/as881028/ha-addons/blob/main/teslamate/DOCS.md",
+    "org.opencontainers.image.licenses": "MIT",
+    "org.opencontainers.image.source": "https://github.com/as881028/ha-addons/",
+    "org.opencontainers.image.title": "Home Assistant Add-on: TeslaMate"
+  }
+}
