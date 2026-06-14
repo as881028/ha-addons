@@ -68,8 +68,19 @@ restore() {
   DS=$(echo "$datasources" | jq ".[] | select(.name==\"TeslaMate\")")
 
   if [[ -z "$DS" ]]; then
-    bashio::log.error "'TeslaMate' datasource not found. Please create or rename your datasource. It must be named 'TeslaMate'."
-    exit 1
+    bashio::log.info "TeslaMate datasource not found, creating it..."
+    DS_PAYLOAD="{\"name\":\"TeslaMate\",\"type\":\"postgres\",\"url\":\"${DATABASE_HOST}:${DATABASE_PORT}\",\"user\":\"${DATABASE_USER}\",\"secureJsonData\":{\"password\":\"${DATABASE_PASS}\"},\"jsonData\":{\"database\":\"${DATABASE_NAME}\",\"sslmode\":\"disable\",\"maxOpenConns\":0,\"maxIdleConns\":2,\"connMaxLifetime\":14400,\"postgresVersion\":1500,\"timescaledb\":false}}"
+    create_result=$(curl --silent --show-error \
+      --user "$LOGIN" -X POST -H "Content-Type: application/json" \
+      -d "$DS_PAYLOAD" \
+      "$URL/api/datasources")
+    if echo "$create_result" | jq -e '.id' > /dev/null 2>&1; then
+      bashio::log.info "TeslaMate datasource created successfully"
+      DS="$create_result"
+    else
+      bashio::log.error "Failed to create TeslaMate datasource: $create_result"
+      exit 1
+    fi
   fi
 
   bashio::log.info "Checking for Grafana folder: $FOLDER_NAME"
