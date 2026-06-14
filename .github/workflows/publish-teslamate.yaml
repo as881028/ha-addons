@@ -60,5 +60,5 @@ jobs:
             GRAFANA_IMAGE=ghcr.io/${{ github.repository_owner }}/teslamate/grafana:main-${{ matrix.tag_suffix }}
             BUILD_ARCH=${{ matrix.arch }}
           tags: |
-            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:4.0.2
+            ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:4.0.3
             ${{ env.IMAGE_BASE }}-${{ matrix.arch }}:latest

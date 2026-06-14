@@ -27,6 +27,13 @@ main() {
   URL="http://$HOST:$PORT"
   LOGIN="$USER:$PASS"
 
+  # Support Bearer token auth via GRAFANA_TOKEN env var (takes precedence over user/pass)
+  if [[ -n "${GRAFANA_TOKEN:-}" ]]; then
+    AUTH_HEADER="Authorization: Bearer $GRAFANA_TOKEN"
+  else
+    AUTH_HEADER=""
+  fi
+
   case $task in
       backup) backup;;
       restore) restore;;
@@ -34,6 +41,13 @@ main() {
   esac
 }
 
+_curl() {
+  if [[ -n "$AUTH_HEADER" ]]; then
+    curl --silent --show-error -H "$AUTH_HEADER" "$@"
+  else
+    curl --silent --show-error --user "$LOGIN" "$@"
+  fi
+}
 
 backup() {
   local dashboard_json
@@ -55,9 +69,7 @@ backup() {
 
 restore() {
   bashio::log.info "Checking for Grafana datasource: TeslaMate"
-  datasources=$(curl --silent --show-error \
-    --user "$LOGIN" -H "Content-Type: application/json" \
-    "$URL/api/datasources")
+  datasources=$(_curl -H "Content-Type: application/json" "$URL/api/datasources")
 
   if [[ $datasources == *"statusCode"* ]]; then
     bashio::log.error "Error getting Grafana datasources: $(echo "$datasources" | jq -r .message)"
@@ -70,8 +82,7 @@ restore() {
   if [[ -z "$DS" ]]; then
     bashio::log.info "TeslaMate datasource not found, creating it..."
     DS_PAYLOAD="{\"name\":\"TeslaMate\",\"type\":\"postgres\",\"url\":\"${DATABASE_HOST}:${DATABASE_PORT}\",\"user\":\"${DATABASE_USER}\",\"secureJsonData\":{\"password\":\"${DATABASE_PASS}\"},\"jsonData\":{\"database\":\"${DATABASE_NAME}\",\"sslmode\":\"disable\",\"maxOpenConns\":0,\"maxIdleConns\":2,\"connMaxLifetime\":14400,\"postgresVersion\":1500,\"timescaledb\":false}}"
-    create_result=$(curl --silent --show-error \
-      --user "$LOGIN" -X POST -H "Content-Type: application/json" \
+    create_result=$(_curl -X POST -H "Content-Type: application/json" \
       -d "$DS_PAYLOAD" \
       "$URL/api/datasources")
     if echo "$create_result" | jq -e '.id' > /dev/null 2>&1; then
@@ -84,9 +95,7 @@ restore() {
   fi
 
   bashio::log.info "Checking for Grafana folder: $FOLDER_NAME"
-  folders=$(curl --silent --show-error \
-    --user "$LOGIN" -H "Content-Type: application/json" \
-    "$URL/api/folders")
+  folders=$(_curl -H "Content-Type: application/json" "$URL/api/folders")
 
   if [[ $folders == *"statusCode"* ]]; then
     bashio::log.error "Error getting Grafana folders: $(echo "$folders" | jq -r .message)"
@@ -98,10 +107,7 @@ restore() {
 
   if [[ -z "$FLD" ]]; then
     bashio::log.info "Not found... creating"
-    FLD=$(curl \
-          --silent \
-          --show-error  \
-          --user "$LOGIN" \
+    FLD=$(_curl \
           -X POST -H "Content-Type: application/json" \
           -d "{\"title\":\"$FOLDER_NAME\"}" \
           "$URL/api/folders")
@@ -116,9 +122,8 @@ restore() {
 
   find "$DASHBOARDS_DIRECTORY" -type f -name \*.json -print0 |
       while IFS= read -r -d '' dashboard; do
-          curl \
-            --silent --show-error --output /dev/null \
-            --user "$LOGIN" \
+          _curl \
+            --output /dev/null \
             -X POST -H "Content-Type: application/json" \
             -d "{\"dashboard\":$(cat "$dashboard"),\"overwrite\":true,\"folderId\":$FOLDER_ID, \
                     \"inputs\":[{\"name\":\"DS_POSTGRES\",\"type\":\"datasource\", \
@@ -141,19 +146,13 @@ get_dashboard() {
     exit 1
   fi
 
-  curl \
-    --silent \
-    --user "$LOGIN" \
-    "$URL/api/dashboards/db/$dashboard" |
+  _curl "$URL/api/dashboards/db/$dashboard" |
     jq '.dashboard | .id = null'
 }
 
 
 list_dashboards() {
-  curl \
-    --silent \
-    --user "$LOGIN" \
-    "$URL/api/search" |
+  _curl "$URL/api/search" |
     jq -r '.[] | select(.type == "dash-db") | .uri' |
     cut -d '/' -f2
 }
