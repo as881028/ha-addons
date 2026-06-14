@@ -81,7 +81,7 @@ restore() {
 
   if [[ -z "$DS" ]]; then
     bashio::log.info "TeslaMate datasource not found, creating it..."
-    DS_PAYLOAD="{\"name\":\"TeslaMate\",\"type\":\"postgres\",\"url\":\"${DATABASE_HOST}:${DATABASE_PORT}\",\"user\":\"${DATABASE_USER}\",\"secureJsonData\":{\"password\":\"${DATABASE_PASS}\"},\"jsonData\":{\"database\":\"${DATABASE_NAME}\",\"sslmode\":\"disable\",\"maxOpenConns\":0,\"maxIdleConns\":2,\"connMaxLifetime\":14400,\"postgresVersion\":1500,\"timescaledb\":false}}"
+    DS_PAYLOAD="{\"name\":\"TeslaMate\",\"type\":\"postgres\",\"access\":\"proxy\",\"url\":\"${DATABASE_HOST}:${DATABASE_PORT}\",\"user\":\"${DATABASE_USER}\",\"secureJsonData\":{\"password\":\"${DATABASE_PASS}\"},\"jsonData\":{\"database\":\"${DATABASE_NAME}\",\"sslmode\":\"disable\",\"maxOpenConns\":0,\"maxIdleConns\":2,\"connMaxLifetime\":14400,\"postgresVersion\":1500,\"timescaledb\":false}}"
     create_result=$(_curl -X POST -H "Content-Type: application/json" \
       -d "$DS_PAYLOAD" \
       "$URL/api/datasources")
